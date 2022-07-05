@@ -1,0 +1,9 @@
+size||1000
+nbHumain||999
+nbMalade||1
+nbIteration||730
+nbDeplacementJour||15
+transmissionRate||0.5
+durationIncubation||3
+durationInfection||7
+durationImmunity||365
