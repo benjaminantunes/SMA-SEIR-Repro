@@ -715,7 +715,7 @@ void World::moveHumanInfected(int inRow, int inColumn)
 {
 
    
-   if(_carte[inRow][inColumn]->getState() > _durationInfection)
+   if(_carte[inRow][inColumn]->getState() > randmt->boxMuller(_durationInfection))
    {
       _carte[inRow][inColumn]->resetState();
       _carte[inRow][inColumn]->setStateName("recovered");
@@ -796,7 +796,7 @@ void World::moveHumanInfected(int inRow, int inColumn)
 void World::moveHumanExposed(int inRow, int inColumn)
 {
 
-   if(_carte[inRow][inColumn]->getState() > _durationIncubation)
+   if(_carte[inRow][inColumn]->getState() > randmt->boxMuller(_durationIncubation))
    {  
       _carte[inRow][inColumn]->resetState();
       _carte[inRow][inColumn]->setStateName("infected");
@@ -861,7 +861,7 @@ void World::moveHumanRecovered(int inRow, int inColumn)
 {
 
 
-   if(_carte[inRow][inColumn]->getState() > _durationImmunity)
+   if(_carte[inRow][inColumn]->getState() > randmt->boxMuller(_durationImmunity))
    { 
       _carte[inRow][inColumn]->setStateName("susceptible");
       _newHumanSusceptiblePositions.push_back(_carte[inRow][inColumn]->getPosition());
