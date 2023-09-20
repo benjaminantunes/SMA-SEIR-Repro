@@ -1,8 +1,7 @@
-size||100
-nbHumain||999
-nbMalade||10
+size||300
+nbHumain||20000
+nbMalade||20
 nbIteration||730
-nbDeplacementJour||15
 transmissionRate||0.5
 durationIncubation||3
 durationInfection||7

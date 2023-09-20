@@ -36,32 +36,35 @@ Human::Human(SimulationParams * inSimulationParams,
    _pos       = Position(inRow,inColumn);
    _symbol    = Human::SYMBOL_SUSCEPTIBLE;
    _stateName = "susceptible";
+   _dE        = randmt->negExp(inSimulationParams->getDurationIncubation());
+   _dI        = randmt->negExp(inSimulationParams->getDurationInfection());
+   _dR        = randmt->negExp(inSimulationParams->getDurationImmunity());
    
 }
 
 
 
 // -------------------------------------------------------------------- //
-// Human::getState  Retourne l'état de l'humain (les jours de maladie)  //
+// Human::getState  Retourne l'état de l'humain (les jours dans l'état) //
 //                                                                      //
 // En sortie:                                                           //
 //                                                                      //
 //    Integer : L'état                                                  //
 // -------------------------------------------------------------------- //
 
-int Human::getState()
+int Human::getElapsedTimeInState()
 {
-   return _state;
+   return _elapsedTimeInstate;
 }
 
 // -------------------------------------------------------------------- //
 // Human::incrementState                                                //
-//    Augmente l'état de l'humain, un jour de plus de maladie           //
+//    Augmente l'état de l'humain, un jour de plus dans l'etat courant  //
 // -------------------------------------------------------------------- //
 
-void Human::incrementState()
+void Human::incrementElapsedTimeInState()
 {
-   _state += 1;
+   _elapsedTimeInstate += 1;
 }
 
 // -------------------------------------------------------------------- //
@@ -107,7 +110,7 @@ string Human::getStateName()
 void Human::setStateName(string stateName)
 {
    _stateName = stateName;
-   resetState();
+   resetElapsedTimeInState();
 }
 // -------------------------------------------------------------------- //
 // Human::setPosition  Modifie la position de l'humain                  //
@@ -143,12 +146,22 @@ Position  Human::getPosition()
 
 
 // -------------------------------------------------------------------- //
-// Human::resetState  Remet l'état à 0, l'humain n'est plus malade      //
+// Human::resetElapsedTimeInState  Remet l'état à 0                     //
 // -------------------------------------------------------------------- //
 
-void Human::resetState()
+void Human::resetElapsedTimeInState()
 {
-   _state = 0;
+   _elapsedTimeInstate = 0;
 }
 
+int Human::getDE(){
+    return _dE;
+}
 
+int Human::getDI(){
+    return _dI;
+}
+
+int Human::getDR(){
+    return _dR;
+}

@@ -17,18 +17,24 @@ class Human
       static const char SYMBOL_INFECTED = 'I';
       static const char SYMBOL_RECOVERED = 'R';
       
-      int      _state = 0;
+      int      _elapsedTimeInstate = 0;
       char     _symbol;
       Position _pos;
-      string   _stateName;      
+      string   _stateName;
+      int      _dE;
+      int      _dI;
+      int      _dR;
 
    public:
  
       Human(SimulationParams*,int,int);
       
-      int       getState();
-      void      resetState();
-      void      incrementState();
+      int       getElapsedTimeInState();
+      int       getDE();
+      int       getDI();
+      int       getDR();
+      void      resetElapsedTimeInState();
+      void      incrementElapsedTimeInState();
       char      to_string();
       void      setPosition(int,int);
       Position  getPosition();

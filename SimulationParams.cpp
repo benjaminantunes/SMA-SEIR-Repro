@@ -13,7 +13,6 @@ SimulationParams::SimulationParams(char * inFilename){
    _mapStringValues["nbMalade"] = 10;
    _mapStringValues["nbHumain"] = 11;
    _mapStringValues["nbIteration"] = 12;
-   _mapStringValues["nbDeplacementJour"] = 49;
    _mapStringValues["transmissionRate"] = 13;
    _mapStringValues["durationIncubation"] = 14;
    _mapStringValues["durationInfection"] = 15;
@@ -65,10 +64,6 @@ SimulationParams::SimulationParams(char * inFilename){
             case 12:
                _nbIteration = stoi(paramValues);
                break;
-         
-            case 49:
-               _nbDeplacementJour = stoi(paramValues);
-               break;
                
             case 13:
                _transmissionRate = stof(paramValues);
@@ -115,11 +110,6 @@ int SimulationParams::getNbHumain()
 int SimulationParams::getNbIteration()
 {
    return _nbIteration;
-}
-
-int SimulationParams::getNbDeplacementJour()
-{
-   return _nbDeplacementJour;
 }
 
 float SimulationParams::getTransmissionRate()

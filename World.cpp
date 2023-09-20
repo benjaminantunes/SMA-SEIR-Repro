@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <iostream>
+#include <cmath>
+#include <algorithm>    // std::find
 
 using namespace std;
 
@@ -45,23 +47,7 @@ World::World(SimulationParams * inSimulationParams,
                      
    _durationInfection  = inSimulationParams->getDurationInfection();
    
-   _nbDeplacementJour  = inSimulationParams->getNbDeplacementJour();
-                     
-
-   _carte = (Human ***)malloc(_size * sizeof(Human**));
-   for(int i = 0; i < _size; i++)
-   {
-      _carte[i] = (Human **)malloc(_size * sizeof(Human*));
-   }
-   
-   for(int i = 0; i<_size ;i++)
-   {
-      for(int j = 0; j<_size ; j++)
-      {
-         
-         _carte[i][j] = nullptr;
-      }
-   }
+                  
 
    _log = inLog;
    _stats["susceptible"] = 0;
@@ -145,49 +131,6 @@ void World::pause()
 
 
 // -------------------------------------------------------------------- //
-// World::Display:                                                      //
-//    Permet d'afficher l'état actuel de la carte et des Humains        //
-//                                                                      //
-// En entrée:                                                           //
-//                                                                      //
-//    Pas d'entrée                                                      //
-//                                                                      //
-// En sortie:                                                           // 
-//                                                                      //
-//   Pas de sortie                                                      //
-// -------------------------------------------------------------------- //
-void World::display()
-{
-   cout << endl;
-   cout << endl;
-   cout << endl;
-   cout << endl;
-   cout << endl;
-   cout << "*****************************************************************";
-   for(int row = 0; row<_size; row++)
-   {
-      cout << "   " << endl;
-      for(int column = 0; column<_size; column++ )
-      {
-         if(_carte[row][column] == nullptr)
-         {
-            // Null n'existe pas en C++. J'ai initialisé à NULL, 
-            //donc j'imagine un tableau rempli de 0.
-            cout << World::SYMBOL_EMPTY;
-         }
-         else
-         {            
-            cout << _carte[row][column]->to_string();
-         }
-
-      }
-      cout << endl;
-   }
-}
-
-
-
-// -------------------------------------------------------------------- //
 // World::updateStats:                                                  //
 //    Permet de mettre à jour les statistiques des Humains.             //
 //    Les statistiques sont : Le nombre d'humain qui n'ont pas eu la    //
@@ -249,85 +192,6 @@ void World::displayStats()
    cout <<"Recovered : " << _stats.at("recovered") << endl;
 }
 
-
-// -------------------------------------------------------------------- //
-// World::isValid:  Teste si la position est valide (dans la carte)     //
-//                                                                      //
-// En entrée:                                                           // 
-//                                                                      //
-//    inRow :                                                           //
-//       Ligne de la position à tester                                  //
-//    inColumn :                                                        //
-//       Colonne de la position à tester                                //
-//                                                                      //
-// En sortie:                                                           //
-//                                                                      //
-//    Booléen :                                                         //
-//       Oui ou non la position est valide                              //
-// -------------------------------------------------------------------- //
-bool World::isValid(int inRow, int inColumn)
-{
-   return inRow >= 0 && inColumn >= 0 && inRow < _size and inColumn < _size;
-}
-
-
-
-// -------------------------------------------------------------------- //
-// World::isHuman:  Teste si la position est un humain                  //
-//                                                                      //
-// En entrée:                                                           // 
-//                                                                      //
-//    inRow :                                                           //
-//       Ligne de la position à tester                                  //
-//    inColumn :                                                        //
-//       Colonne de la position à tester                                //
-//                                                                      //
-// En sortie:                                                           //
-//                                                                      //
-//    Booléen :                                                         //
-//       Oui ou non la position est un humain                           //
-// -------------------------------------------------------------------- //
-bool World::isHuman(int inRow, int inColumn)
-{
-   if(isValid(inRow,inColumn) && _carte[inRow][inColumn] != nullptr)
-   {
-      return
-         isValid(inRow,inColumn) && 
-         (
-            _carte[inRow][inColumn]->to_string() == 'S' ||
-            _carte[inRow][inColumn]->to_string() == 'E' ||
-            _carte[inRow][inColumn]->to_string() == 'I' ||
-            _carte[inRow][inColumn]->to_string() == 'R'
-               
-           );
-   }
-   return false;
-
-}
-
-
-
-// -------------------------------------------------------------------- //
-// World::isEmpty:  Teste si la position est vide                       //
-//                                                                      //
-// En entrée:                                                           // 
-//                                                                      //
-//    inRow :                                                           //
-//       Ligne de la position à tester                                  //
-//    inColumn :                                                        //
-//       Colonne de la position à tester                                //
-//                                                                      //
-// En sortie:                                                           //
-//                                                                      //
-//    Booléen :                                                         //
-//       Oui ou non la position est vide                                //
-// -------------------------------------------------------------------- //
-bool World::isEmpty(int inRow, int inColumn)
-{
-   return isValid(inRow,inColumn) && _carte[inRow][inColumn] == nullptr;
-}
-
-
 // -------------------------------------------------------------------- //
 // World::addAgent:  Initialise la carte en ajoutant les Agents         //
 //                                                                      //
@@ -373,20 +237,12 @@ void World::addAgent(SimulationParams * inSimulationParams,
       bool  varEmpty = false;
       int   row;
       int   column;
-        
-      while(!varEmpty)
-      {
-            
-         // On cherche une position libre sur la carte 
-         row = randmt->genrand_int32()%_size ;
-         column = randmt->genrand_int32()%_size ;
-         varEmpty = isEmpty(row,column);
-      }
+ 
+      row = randmt->genrand_int32()%_size;
+      column = randmt->genrand_int32()%_size;
+      Human h = Human(inSimulationParams,row,column);
+      _humans.push_back(h);
 
-         
-      _carte[row][column] = new Human(inSimulationParams,row,column);
-      
-      _humanSusceptiblePositions.push_back(_carte[row][column]->getPosition());
       
    }
    
@@ -397,16 +253,14 @@ void World::addAgent(SimulationParams * inSimulationParams,
       bool varEmpty = false;
       int row;
       int column;
-      while(!varEmpty)
-      {
-         row = randmt->genrand_int32()%_size ;
-         column = randmt->genrand_int32()%_size ;
-         varEmpty = isEmpty(row,column);
-      }
-      
-      _carte[row][column] = new Human(inSimulationParams,row,column);
-      _carte[row][column]->setStateName("infected");
-      _humanInfectedPositions.push_back(_carte[row][column]->getPosition());
+
+      row = randmt->genrand_int32()%_size;
+      column = randmt->genrand_int32()%_size;
+
+      Human h = Human(inSimulationParams,row,column);
+      h.setStateName("infected");
+      _humans.push_back(h);// passage par copie dans le vecteur, pas par réf ...
+
       
 
    }
@@ -455,69 +309,71 @@ void World::initialize(SimulationParams * inSimulationParams)
 //    Un dictionnaire/map associant les cases vides à une liste de      //
 //    positions et les cases occupées à une liste de positions.         // 
 // -------------------------------------------------------------------- //
-map<string,vector<Position>> World::vision(int inLength,
-                                           int inRow, 
-                                           int inColumn)
+int World::vision(int inLength, Human inHuman)
 {
 
-
-   Position                      maPositionTest;
-   map<string, vector<Position>> neighborhood;
-
-   neighborhood["empty"];
-   neighborhood["human"];
-    
-
-   for(int elt_1 = 0-inLength; elt_1<inLength+1;elt_1++)
-   {
-      for(int elt_2 = 0-inLength; elt_2<inLength+1;elt_2++)
-      {
-
-         maPositionTest.setPosX(elt_1);
-         maPositionTest.setPosY(elt_2);
-
-         bool isInNeighborhood = false;
-
-         for(Position  temp: neighborhood.at("empty") )
-         {
-            if(temp == maPositionTest)
-            {
-               isInNeighborhood = true;
-            }
-         }
-         for(Position  temp: neighborhood.at("human") )
-         {
-
-            if(temp == maPositionTest)
-            {
-               isInNeighborhood = true;
-            }
-         }
-
-
-         
-         // Tous ça pour ça : and (elt_1, elt_2) not in neighborhood
-         if((elt_1 != 0 || elt_2 !=0) && !isInNeighborhood )
-         {
-            
-            
-            if(isHuman(inRow+elt_1,inColumn+elt_2))
-            {
-               neighborhood["human"].push_back(_carte[inRow+elt_1][inColumn+elt_2]->getPosition());
-            }
-            if(isEmpty(inRow+elt_1,inColumn+elt_2))
-            {
-               Position pos;
-               pos.setPosX(inRow+elt_1);
-               pos.setPosY(inColumn+elt_2);
-               neighborhood["empty"].push_back(pos);
+   //Ne retourner que le nombre de personne infecté dans le voisinage, c'est la seul chose qui sera utile.
+   int countInfectedNeighbour = 0;
+   /*
+   for(Human human: _humans){
+      if(abs(human.getPosition().getPosX() - inHuman.getPosition().getPosX()) <=1){
+         if(abs(human.getPosition().getPosY() - inHuman.getPosition().getPosY()) <=1){
+            if(human.getStateName()=="infected"){
+               countInfectedNeighbour++;
             }
             
          }
       }
    }
-
-   return neighborhood;
+   */
+   //cout << "oh" << endl;
+   for (Human human : _humans) {
+      int dx = abs(human.getPosition().getPosX() - inHuman.getPosition().getPosX());
+      int dy = abs(human.getPosition().getPosY() - inHuman.getPosition().getPosY());
+      if (dx <= 1 || dx >= _size) { // check if human is in x-range of inHuman
+         if (dy <= 1 || dy >= _size) { // check if human is in y-range of inHuman
+            if (human.getStateName() == "infected") {
+                countInfectedNeighbour++;
+            }
+         }
+      }
+   }
+   /*
+   vector<int> neighbourPosX;
+   vector<int> neighbourPosY;
+   //I do this for toroidal space, with %_size to go the other way.
+   neighbourPosX.push_back( (inHuman.getPosition().getPosX() == 0) ? _size : (inHuman.getPosition().getPosX() - 1) );
+   neighbourPosX.push_back( (inHuman.getPosition().getPosX()));
+   neighbourPosX.push_back( (inHuman.getPosition().getPosX() + 1)%_size);
+   
+   neighbourPosY.push_back( (inHuman.getPosition().getPosY() == 0) ? _size : (inHuman.getPosition().getPosY() - 1) );
+   neighbourPosY.push_back( (inHuman.getPosition().getPosY()));
+   neighbourPosY.push_back( (inHuman.getPosition().getPosY() + 1)%_size);
+   
+   //If the human infected is in my neibourhood
+   for(Human human: _humans){
+      if(find(neighbourPosX.begin(), neighbourPosX.end(), human.getPosition().getPosX()) != neighbourPosX.end() && find(neighbourPosY.begin(), neighbourPosY.end(), human.getPosition().getPosY()) != neighbourPosY.end()){
+         if(human.getStateName()=="infected"){
+            countInfectedNeighbour++;
+         }
+      }
+   }
+   */
+   /* how the find is working : 
+    * Find returns :
+    * An iterator to the first element in the range that compares equal to val.
+      If no elements match, the function returns last.
+      
+      The "last" is not really the last value, that's why it is working.
+      The explaination is that vector.end do not refer to the last value
+      vector.end() returns :
+      Returns an iterator referring to the past-the-end element in the vector container.
+      The past-the-end element is the theoretical element that would follow the last element in the vector. 
+      It does not point to any element, and thus shall not be dereferenced.
+    * 
+    */
+   
+   return countInfectedNeighbour;
 }
 
 
@@ -548,93 +404,20 @@ map<string,vector<Position>> World::vision(int inLength,
 //                                                                      //
 //    Pas de sortie                                                     //
 // -------------------------------------------------------------------- //
-void World::contamination(int inRow, int inColumn, int inCurrentRow, int inCurrentColumn)
+Human World::contamination(Human inHuman)
 {
    
-   map<string, vector<Position>> target_v1 = vision(2,inRow,inColumn);
-   Position                      maPositionTest;
-
+   int nbInfectedNeighbour = vision(1,inHuman);
    
-   for(Position  pos : target_v1["human"])
-   {
+   //cout <<"Nb voisin infected : " << nbInfectedNeighbour << endl;
+   double probaInfected = exp(-_transmissionRate*nbInfectedNeighbour);
    
-      if(_carte[pos.getPosX()][pos.getPosY()]->to_string() == 'S')
-      {
-      
-         float randomValue = randmt->genrand_real1();
-
-         if(randomValue < _transmissionRate)
-         {
-            _carte[pos.getPosX()][pos.getPosY()]->setStateName("exposed");
-            _newHumanExposedPositions.push_back(
-                                            Position(pos.getPosX(),
-                                                    pos.getPosY()));
-    
-    
-            maPositionTest.setPosX(pos.getPosX());
-            maPositionTest.setPosY(pos.getPosY());
-            int index = 0;
-            for(Position  temp: _newHumanSusceptiblePositions )
-            {
-
-                if(temp == maPositionTest)
-                {
-                    _newHumanSusceptiblePositions.erase(
-                                _newHumanSusceptiblePositions.begin()+index
-                                            );
-                }
-                index++;
-            }
-
-            updateStats("exposed");
-         }
-      }
+   if(randmt->genrand_real1() > probaInfected){
+      inHuman.setStateName("exposed");
+      updateStats("exposed");
    }
+   return inHuman;
 }
-
-
-
-// -------------------------------------------------------------------- //
-// World::humanGoFromTo:                                                //
-//    Déplace un humain sur la carte, et le tue s'il doit mourir        //
-//                                                                      //
-// En entrée:                                                           //
-//                                                                      //
-//    inFromRow :                                                       //
-//       La ligne actuelle de l'humain                                  //
-//                                                                      //
-//    inFromColumn :                                                    //
-//       La colonne actuelle de l'humain                                //
-//                                                                      //
-//    inToRow :                                                         //
-//       La ligne de destination de l'humain                            //
-//                                                                      //
-//    inToColumn :                                                      //
-//        La colonne de destination de l'humain                         //
-//                                                                      //
-//    inDie :                                                           //
-//       Booléen pour définir si l'humain doit mourir                   //
-//                                                                      //
-//                                                                      //
-// En sortie:                                                           // 
-//                                                                      //
-//    Pas de sortie                                                     //
-// -------------------------------------------------------------------- //
-void World::humanGoFromTo(int  inFromRow,
-                          int  inFromColumn, 
-                          int  inToRow, 
-                          int  inToColumn)
-{
-    
-
-   _carte[inToRow][inToColumn] = _carte[inFromRow][inFromColumn];
-   _carte[inToRow][inToColumn]->setPosition(inToRow,inToColumn);
-   _carte[inFromRow][inFromColumn] = nullptr;
-   // Interet de rajouter cette ligne ? Bizarre
-   //_carte[inToRow][inToColumn]->setPosition(inToRow,inToColumn);
-}
-
-
 
 
 
@@ -656,249 +439,69 @@ void World::humanGoFromTo(int  inFromRow,
 //                                                                      //
 //    Pas de sortie                                                     //
 // -------------------------------------------------------------------- //
-void World::moveHumanSusceptible(int inRow, int inColumn)
+void World::moveHumans()
 {
-
-   
    int rowDeplacement;
    int columnDeplacement;
 
-   // Il peut se déplacer de 0 à size
-   rowDeplacement = randmt->genrand_int32()%_size; 
-   columnDeplacement = randmt->genrand_int32()%_size; 
+    
 
-   map<string, vector<Position>> target_v1 = vision(1,rowDeplacement,columnDeplacement);
-
-   if(target_v1["empty"].size() != 0)
-   {
-      int taille = target_v1.at("empty").size();
-      int randomValue = ((long)floor(randmt->genrand_int32()))%taille;
-      humanGoFromTo(inRow,
-                    inColumn, 
-                    target_v1.at("empty").at(randomValue).getPosX(),
-                    target_v1.at("empty").at(randomValue).getPosY()
-                   );
-      _newHumanSusceptiblePositions.push_back(target_v1.at("empty").at(randomValue));
-      _carte[target_v1.at("empty").at(randomValue).getPosX()][target_v1.at("empty").at(randomValue).getPosY()]->incrementState();
+   for(Human human: _humans){
+      /* 
+      cout <<"Human dE : " << human.getDE() << endl;
+      cout <<"Human dI : " << human.getDI() << endl;
+      cout <<"Human dR : " << human.getDR() << endl;
+      cout <<"Human position X : " << human.getPosition().getPosX() << endl;
+      cout <<"Human position Y : " << human.getPosition().getPosY() << endl;
+      cout <<"Human position State : " << human.to_string() << endl;
+      */
+      // Il peut se déplacer de 0 à size
+      rowDeplacement = randmt->genrand_int32()%_size; 
+      columnDeplacement = randmt->genrand_int32()%_size;
+      if(human.to_string() == 'S'){
+         human.resetElapsedTimeInState(); // we don't care about time in state for susceptible.
+         human = contamination(human);
+         human.setPosition(rowDeplacement,columnDeplacement);
+         _humansNext.push_back(human);
+      }
+      else if(human.to_string() == 'E'){
+         if(human.getElapsedTimeInState() > human.getDE()){
+            human.setStateName("infected");
+            updateStats("infected");
+            human.resetElapsedTimeInState();
+         }else{
+            human.incrementElapsedTimeInState();
+         }
+         human.setPosition(rowDeplacement,columnDeplacement);
+         _humansNext.push_back(human);
+      }
+      else if(human.to_string() == 'I'){
+         if(human.getElapsedTimeInState() > human.getDI()){
+            human.setStateName("recovered");
+            updateStats("recovered");
+            human.resetElapsedTimeInState();
+         }else{
+            human.incrementElapsedTimeInState();
+         }
+         human.setPosition(rowDeplacement,columnDeplacement);
+         _humansNext.push_back(human);
+      }
+      else if(human.to_string() == 'R'){
+         if(human.getElapsedTimeInState() > human.getDR()){
+            human.setStateName("susceptible");
+            updateStats("susceptible");
+            human.resetElapsedTimeInState();
+         }else{
+            human.incrementElapsedTimeInState();
+         }
+         human.setPosition(rowDeplacement,columnDeplacement);
+         _humansNext.push_back(human);
+      }
    }
-   else
-   {
-      _newHumanSusceptiblePositions.push_back(_carte[inRow][inColumn]->getPosition());
-      _carte[inRow][inColumn]->incrementState();
-   }
-   
 
 }
 
 
-
-
-// -------------------------------------------------------------------- //
-// World::moveHumanAsymptomatique:                                      //
-//    Réalise la comportement des humains asymptomatique                //
-//                                                                      //
-// En entrée:                                                           //
-//                                                                      //
-//    inRow :                                                           //
-//       La ligne de l'humain sur la carte (Position X sur la carte)    //
-//                                                                      //
-//    inColumn :                                                        //
-//       La colonne de l'humain sur la carte (Position Y sur la carte)  //
-//                                                                      //
-//                                                                      //
-//                                                                      //
-// En sortie:                                                           // 
-//                                                                      //
-//    Pas de sortie                                                     //
-// -------------------------------------------------------------------- //
-void World::moveHumanInfected(int inRow, int inColumn)
-{
-
-   
-   if(_carte[inRow][inColumn]->getState() > randmt->boxMuller(_durationInfection))
-   {
-      _carte[inRow][inColumn]->resetState();
-      _carte[inRow][inColumn]->setStateName("recovered");
-      updateStats("recovered");
-      _newHumanRecoveredPositions.push_back(Position(inRow, inColumn)); 
-      return;
-          
-   }
-
-   int rowDeplacement;
-   int columnDeplacement;
-
-   // Il peut se déplacer de 0 à size
-   rowDeplacement = randmt->genrand_int32()%_size; 
-   columnDeplacement = randmt->genrand_int32()%_size; 
-   
-   map<string, vector<Position>> target_v1 = vision(1,rowDeplacement,columnDeplacement);
-
-
-   if(target_v1["empty"].size() != 0)
-   {
-   
-      int taille = target_v1.at("empty").size();
-      int randomValue = ((long)floor(randmt->genrand_int32()))%taille;
-
-      contamination(target_v1.at("empty").at(randomValue).getPosX(),
-                     target_v1.at("empty").at(randomValue).getPosY(),
-                     inRow,
-                     inColumn
-                     );
-
-      humanGoFromTo(inRow,
-                     inColumn, 
-                     target_v1.at("empty").at(randomValue).getPosX(),
-                     target_v1.at("empty").at(randomValue).getPosY()
-                     );
-
-
-      _newHumanInfectedPositions.push_back(
-                                       target_v1.at("empty").at(randomValue)
-                                                         );
-      
-   }
-   else
-   {
-      contamination(inRow,inColumn, inRow, inColumn);
-      _newHumanInfectedPositions.push_back(
-                                       _carte[inRow][inColumn]->getPosition()
-                                                         );
-   }
-   
-   
-}
-
-
-
-
-
-// -------------------------------------------------------------------- //
-// World::moveHumanConfined:                                            //
-//    Réalise la comportement des humains confiné                       //
-//    Les humains contaminés qui ne sont pas asymptomatique             //
-//                                                                      //
-// En entrée:                                                           //
-//                                                                      //
-//    inRow :                                                           //
-//       La ligne de l'humain sur la carte (Position X sur la carte)    //
-//                                                                      //
-//    inColumn :                                                        //
-//       La colonne de l'humain sur la carte (Position Y sur la carte)  //
-//                                                                      //
-//                                                                      //
-//                                                                      //
-// En sortie:                                                           // 
-//                                                                      //
-//    Pas de sortie                                                     //
-// -------------------------------------------------------------------- //
-void World::moveHumanExposed(int inRow, int inColumn)
-{
-
-   if(_carte[inRow][inColumn]->getState() > randmt->boxMuller(_durationIncubation))
-   {  
-      _carte[inRow][inColumn]->resetState();
-      _carte[inRow][inColumn]->setStateName("infected");
-      _newHumanInfectedPositions.push_back(_carte[inRow][inColumn]->getPosition());
-      updateStats("infected");
-      return;
-   
-   }
-   int rowDeplacement;
-   int columnDeplacement;
-
-   // Il peut se déplacer de 0 à size
-   rowDeplacement = randmt->genrand_int32()%_size; 
-   columnDeplacement = randmt->genrand_int32()%_size; 
-   
-
-   map<string, vector<Position>> target_v1 = vision(1,rowDeplacement,columnDeplacement);
-   
-   if(target_v1["empty"].size() != 0)
-   {
-      int taille = target_v1.at("empty").size();
-      int randomValue = ((long)floor(randmt->genrand_int32()))%taille;
-      humanGoFromTo(inRow,
-                    inColumn, 
-                    target_v1.at("empty").at(randomValue).getPosX(),
-                    target_v1.at("empty").at(randomValue).getPosY()
-                   );
-      _newHumanExposedPositions.push_back(target_v1.at("empty").at(randomValue));
-      _carte[target_v1.at("empty").at(randomValue).getPosX()][target_v1.at("empty").at(randomValue).getPosY()]->incrementState();
-   }
-   else
-   {
-      _newHumanExposedPositions.push_back(_carte[inRow][inColumn]->getPosition());
-      _carte[inRow][inColumn]->incrementState();
-   }
-   
-
-}
-
-
-
-
-// -------------------------------------------------------------------- //
-// World::moveHumanHospital:                                            //
-//    Réalise le comportement des humains à l'hopital                   //
-//                                                                      //
-// En entrée:                                                           //
-//                                                                      //
-//    inRow :                                                           //
-//       La ligne de l'humain sur la carte (Position X sur la carte)    //
-//                                                                      //
-//    inColumn :                                                        //
-//       La colonne de l'humain sur la carte (Position Y sur la carte)  //
-//                                                                      //
-//                                                                      //
-//                                                                      //
-// En sortie:                                                           // 
-//                                                                      //
-//    Pas de sortie                                                     //
-// -------------------------------------------------------------------- //
-void World::moveHumanRecovered(int inRow, int inColumn)
-{
-
-
-   if(_carte[inRow][inColumn]->getState() > randmt->boxMuller(_durationImmunity))
-   { 
-      _carte[inRow][inColumn]->setStateName("susceptible");
-      _newHumanSusceptiblePositions.push_back(_carte[inRow][inColumn]->getPosition());
-      _carte[inRow][inColumn]->resetState();
-      updateStats("susceptible");
-      return;
-   }
-  
-   int rowDeplacement;
-   int columnDeplacement;
-
-   // Il peut se déplacer de 0 à size
-   rowDeplacement = randmt->genrand_int32()%_size; 
-   columnDeplacement = randmt->genrand_int32()%_size; 
-
-   map<string, vector<Position>> target_v1 = vision(1,rowDeplacement,columnDeplacement);
-
-   if(target_v1["empty"].size() != 0)
-   {
-      int taille = target_v1.at("empty").size();
-      int randomValue = ((long)floor(randmt->genrand_int32()))%taille;
-      humanGoFromTo(inRow,
-                    inColumn, 
-                    target_v1.at("empty").at(randomValue).getPosX(),
-                    target_v1.at("empty").at(randomValue).getPosY()
-                   );
-      _newHumanRecoveredPositions.push_back(target_v1.at("empty").at(randomValue));
-      _carte[target_v1.at("empty").at(randomValue).getPosX()][target_v1.at("empty").at(randomValue).getPosY()]->incrementState();
-   }
-   else
-   {
-      _newHumanRecoveredPositions.push_back(_carte[inRow][inColumn]->getPosition());
-      _carte[inRow][inColumn]->incrementState();
-   }
-   
-
-}
 
 
 
@@ -926,64 +529,11 @@ void World::nextIteration()
    writeLog("##########");
 
    _iteration += 1;
-   /*
-   printf("nb iteration = %d\n",_iteration);
-   printf("nb humain susceptible = %d\n", _humanSusceptiblePositions.size());
-   printf("nb humain exposed = %d\n", _humanExposedPositions.size());
-   printf("nb humain infected = %d\n", _humanInfectedPositions.size());
-   printf("nb humain recovered = %d\n", _humanRecoveredPositions.size());
-   */
-   
-   for(Position  temp: _humanSusceptiblePositions)
-   {
-      moveHumanSusceptible(temp.getPosX(),temp.getPosY());
-   }
 
-   //////////////////////////////////////////////////////////  
+   moveHumans();
 
-    
-   for(Position  temp: _humanExposedPositions)
-   {
-      moveHumanExposed(temp.getPosX(),temp.getPosY());
-
-   }
-
-   ////////////////////////////////////////////////
-
-   for(int x = 0; x < _nbDeplacementJour; x++)
-   {
-      for(Position  temp: _humanInfectedPositions)
-      {
-         moveHumanInfected(temp.getPosX(),temp.getPosY());
-      
-      }
-      _humanInfectedPositions = _newHumanInfectedPositions;
-      _newHumanInfectedPositions.clear();
-   }
-   for(Position  temp: _humanInfectedPositions)
-   {
-      _carte[temp.getPosX()][temp.getPosY()]->incrementState();
-   }
-
-   
- 
-   
-
-////////////////////////////////////////////////////////////
-
-   for(Position  temp: _humanRecoveredPositions)
-   {
-      moveHumanRecovered(temp.getPosX(),temp.getPosY());
-
-   }
-
-   _humanSusceptiblePositions = _newHumanSusceptiblePositions;
-   _humanExposedPositions = _newHumanExposedPositions;
-   _humanRecoveredPositions = _newHumanRecoveredPositions;
-   
-   _newHumanSusceptiblePositions.clear();
-   _newHumanExposedPositions.clear();
-   _newHumanRecoveredPositions.clear();
+   _humans = _humansNext;
+   _humansNext.clear();
    
 }
 

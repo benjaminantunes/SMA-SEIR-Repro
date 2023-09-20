@@ -12,7 +12,6 @@ class SimulationParams
       int              _size;
       int              _nbMalade;
       int              _nbHumain;
-      int              _nbDeplacementJour;
       int              _nbIteration;
       float            _transmissionRate;
       int              _durationIncubation;
@@ -26,7 +25,6 @@ class SimulationParams
       int     getNbMalade();
       int     getNbHumain();
       int     getNbIteration();
-      int     getNbDeplacementJour();
       float   getTransmissionRate();
       int     getDurationInfection();
       int     getDurationIncubation();
